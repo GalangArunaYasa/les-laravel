@@ -60,7 +60,7 @@
             </div>
         </div>
     </nav>
-
+    @include('partials.loading')
 
     <div class="container my-4 flex-grow-1">
         @if(session('sukses'))
