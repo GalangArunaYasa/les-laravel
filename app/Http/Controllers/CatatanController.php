@@ -8,21 +8,29 @@ use Illuminate\Support\Facades\Storage;
 
 class CatatanController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $catatan = Catatan::where('user_id', auth()->id())
-            ->where('is_archived', false)
-            ->get();
+        $query = Catatan::where('user_id', auth()->id())
+            ->where('is_archived', false);
 
-        // if ($request->filled('cari')) {
-        //     $keyword = '%'.$request->cari.'%';
-        //     $query->where(function ($q) use ($keyword) {
-        //         $q->where('judul', 'like', $keyword)
-        //             ->orWhere('isi', 'like', $keyword);
-        //     });
-        // }
+        // fitur search
+        if ($request->filled('cari')) {
+            $keyword = '%'.$request->cari.'%';
+            $query->where(function ($q) use ($keyword) {
+                $q->where('judul', 'like', $keyword)
+                    ->orWhere('isi', 'like', $keyword);
+            });
+        }
 
-        // $catatan = $query->get();
+        // fitur urut
+        $urut = $request->get('urut', 'terbaru'); // default: terbaru
+        if ($urut == 'terlama') {
+            $query->orderBy('created_at', 'asc');
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+        // Ganti get() dengan paginate(5)
+        $catatan = $query->paginate(5); // 5 catatan per halaman
 
         return view('catatan.index', compact('catatan'));
     }
@@ -117,11 +125,31 @@ class CatatanController extends Controller
         return redirect('/catatan')->with('sukses', 'Catatan berhasil dihapus!');
     }
 
-    public function arsip()
+    public function arsip(Request $request)
     {
-        $catatan = Catatan::where('user_id', auth()->id())
-            ->where('is_archived', true)
-            ->get();
+        $query = Catatan::where('user_id', auth()->id())
+            ->where('is_archived', true);
+
+        // fitur search
+        if ($request->filled('cari')) {
+            $keyword = '%'.$request->cari.'%';
+            $query->where(function ($q) use ($keyword) {
+                $q->where('judul', 'like', $keyword)
+                    ->orWhere('isi', 'like', $keyword);
+            });
+        }
+
+        // fitur urut
+        $urut = $request->get('urut', 'terbaru'); // default: terbaru
+        if ($urut == 'terlama') {
+            $query->orderBy('created_at', 'asc');
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        // // fitur bagi page
+        // // Ganti get() dengan paginate(5)
+        $catatan = $query->paginate(5); // 5 catatan per halaman
 
         return view('catatan.arsip', compact('catatan'));
     }

@@ -7,22 +7,37 @@
         <div class="col">
             <h2>Daftar Catatan</h2>
         </div>
+
+        {{-- arsip dan tambah catatan --}}
         <div class="col-auto">
             <a href="/catatan/arsip" class="btn btn-outline-secondary me-2">Arsip
                 ({{ App\Models\Catatan::where('user_id', auth()->id())->where('is_archived', true)->count() }})</a>
             <a href="{{ Route('catatan.create') }}" class="btn btn-success">+ Tambah Baru</a>
         </div>
 
-        <form method="GET" action="/catatan" class="mb-4">
-            <div class="input-group">
-                <input type="text" name="cari" class="form-control" placeholder="Cari judul atau isi catatan..."
-                    value="{{ request('cari') }}">
-                <button class="btn btn-outline-primary" type="submit">Cari</button>
-                @if(request('cari'))
-                    <a href="/catatan" class="btn btn-outline-secondary">✕ Reset</a>
-                @endif
-            </div>
-        </form>
+        {{-- pencarian --}}
+        <div class="d-flex gap-2 mb-4">
+            <form method="GET" action="/catatan" class="flex-fill">
+                <div class="input-group">
+                    <input type="text" name="cari" class="form-control" placeholder="Cari judul atau isi..."
+                        value="{{ request('cari') }}">
+                    <button class="btn btn-outline-primary" type="submit">Cari</button>
+                    @if(request('cari'))
+                        <a href="/catatan" class="btn btn-outline-secondary">✕ Reset</a>
+                    @endif
+                </div>
+            </form>
+
+            <form method="GET" action="/catatan" class="ms-2">
+                <input type="hidden" name="cari" value="{{ request('cari') }}">
+                {{-- hidden berfungsi mempertahankan pencarian dan menambahkan pengurutan --}}
+                <select name="urut" class="form-select" onchange="this.form.submit()">
+                    <option value="terbaru" {{ request('urut') == 'terbaru' ? 'selected' : '' }}>Terbaru</option>
+                    <option value="terlama" {{ request('urut') == 'terlama' ? 'selected' : '' }}>Terlama</option>
+                </select>
+            </form>
+        </div>
+
     </div>
 
     @if($catatan->count() > 0)
@@ -60,6 +75,7 @@
             Belum ada catatan. <a href="/catatan/tambah">Buat catatan pertama!</a>
         </div>
     @endif
+        {{ $catatan->links('pagination::bootstrap-5') }}
 
     <script>
         @if(session('sukses'))
