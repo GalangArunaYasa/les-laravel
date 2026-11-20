@@ -175,4 +175,35 @@ class CatatanController extends Controller
 
         return redirect('/catatan')->with('sukses', 'Catatan dipulihkan dari arsip.');
     }
+
+    // fitur uji coba
+    public function archiveMany(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer',
+        ], [
+            'ids.required' => 'Pilih minimal satu catatan.',
+        ]);
+
+        $jumlah = Catatan::where('user_id', auth()->id())
+            ->whereIn('id', $request->ids)
+            ->update(['is_archived' => true]);
+
+        return redirect('/catatan')->with('success', "$jumlah catatan berhasil diarsipkan.");
+    }
+
+    public function unarchiveMany(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer',
+        ]);
+
+        $jumlah = Catatan::where('user_id', auth()->id())
+            ->whereIn('id', $request->ids)
+            ->update(['is_archived' => false]);
+
+        return redirect('/catatan/arsip')->with('success', "$jumlah catatan berhasil dipulihkan.");
+    }
 }

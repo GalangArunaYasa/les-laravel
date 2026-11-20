@@ -19,6 +19,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/catatan/add', [CatatanController::class, 'create'])->name('catatan.create');
     Route::post('/catatan', [CatatanController::class, 'store']);
     Route::get('/catatan/arsip', [CatatanController::class, 'arsip']);
+
+    Route::post('/catatan/arsip-massal', [CatatanController::class, 'archiveMany']);
+    Route::post('/catatan/pulihkan-massal', [CatatanController::class, 'unarchiveMany']);
     Route::get('/catatan/{id}', [CatatanController::class, 'show'])->name('catatan.show');
     Route::get('/catatan/{id}/edit', [CatatanController::class, 'edit'])->name('catatan.edit');
     Route::put('/catatan/{id}', [CatatanController::class, 'update'])->name('catatan.update');
@@ -26,9 +29,6 @@ Route::middleware('auth')->group(function () {
     // Rute untuk arsip catatan
     Route::post('/catatan/{id}/archive', [CatatanController::class, 'archive']);
     Route::post('/catatan/{id}/unarchive', [CatatanController::class, 'unarchive']);
-
-
-
 
     // Rute kontak
     Route::get('/kontak', [KontakController::class, 'index'])->name('kontak');
