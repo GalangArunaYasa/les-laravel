@@ -6,10 +6,12 @@
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span>{{ $catatan->judul }}</span>
-                    <small class="text-muted">{{ $catatan->created_at->format('d F Y, H:i') }}</small>
-                    <small class="text-muted">{{ $catatan->user->name}}</small>
+                <div class="card-header d-flex justify-content-between align-items-start">
+                    <h4 class="mb-1">{{ $catatan->judul }}</h4>
+                    <p class="text-muted mb-0">Dibuat pada: {{ $catatan->created_at->format('d F Y \J\a\m H.i') }}</p>
+                    @if($catatan->lampiran)
+                        <span class="badge bg-info mt-2">Ada lampiran</span>
+                    @endif
                 </div>
                 <div class="card-body">
                     <p class="card-text">{!! nl2br(e($catatan->isi)) !!}</p>
@@ -32,35 +34,30 @@
                     @endif
                 @endif
 
-                <div class="card-footer">
-                    <p class="card-text">{!! nl2br(e($catatan->user->email)) !!}</p>
-                </div>
-
                 <div class="card-footer text-end">
-                    <a href="/catatan" class="btn btn-secondary">← Kembali</a>
-                    <a href="/catatan/{{ $catatan->id }}/edit" class="btn btn-warning">Edit</a>
+                    <a href="/catatan" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Kembali</a>
 
-
-                    {{-- Metode arsip --}}
                     @if($catatan->is_archived)
                         <form action="/catatan/{{ $catatan->id }}/unarchive" method="POST" class="d-inline">
                             @csrf
-                            <button type="submit" class="btn btn-success">Batalkan Arsip</button>
+                            <button type="submit" class="btn btn-success"><i class="fas fa-undo"></i> Pulihkan</button>
                         </form>
                     @else
                         <form action="/catatan/{{ $catatan->id }}/archive" method="POST" class="d-inline">
                             @csrf
                             <button type="submit" class="btn btn-outline-secondary"
-                                onclick="return confirm('Arsipkan catatan ini?')">Arsipkan</button>
+                                onclick="return confirm('Arsipkan catatan ini?')">
+                                <i class="fas fa-archive"></i> Arsipkan
+                            </button>
                         </form>
                     @endif
 
-                    <form action="#" method="POST" class="d-inline">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger"
-                            onclick="return confirm('Hapus catatan ini?')">Hapus</button>
-                    </form>
+                    <a href="/catatan/{{ $catatan->id }}/edit" class="btn btn-warning"><i class="fas fa-edit"></i> Edit</a>
+
+                    <button type="button" class="btn btn-danger"
+                        onclick="bukaModalHapus('/catatan/{{ $catatan->id }}', '{{ addslashes($catatan->judul) }}')">
+                        <i class="fas fa-trash"></i> Hapus
+                    </button>
                 </div>
             </div>
         </div>

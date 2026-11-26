@@ -14,21 +14,23 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
-    // Rute catatan crud]
+    // Rute catatan crud
     Route::get('/catatan', [CatatanController::class, 'index'])->name('catatan');
     Route::get('/catatan/add', [CatatanController::class, 'create'])->name('catatan.create');
     Route::post('/catatan', [CatatanController::class, 'store']);
     Route::get('/catatan/arsip', [CatatanController::class, 'arsip']);
+
+    Route::get('/catatan/export', [CatatanController::class, 'export']);
+    Route::get('/catatan/import', [CatatanController::class, 'importForm']);
+    Route::post('/catatan/import', [CatatanController::class, 'import']);
+
     Route::get('/catatan/{id}', [CatatanController::class, 'show'])->name('catatan.show');
     Route::get('/catatan/{id}/edit', [CatatanController::class, 'edit'])->name('catatan.edit');
     Route::put('/catatan/{id}', [CatatanController::class, 'update'])->name('catatan.update');
     Route::delete('/catatan/{id}', [CatatanController::class, 'destroy'])->name('catatan.destroy');
-    // Rute untuk arsip catatan
+     ///Rute untuk arsip catatan
     Route::post('/catatan/{id}/archive', [CatatanController::class, 'archive']);
     Route::post('/catatan/{id}/unarchive', [CatatanController::class, 'unarchive']);
-
-
-
 
     // Rute kontak
     Route::get('/kontak', [KontakController::class, 'index'])->name('kontak');

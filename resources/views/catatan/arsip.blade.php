@@ -6,6 +6,7 @@
     <div class="row justify-content-between mb-3">
         <div class="col">
             <h2>Catatan Arsip</h2>
+            <p class="text-muted">Kamu punya {{ $jumlah_arsip }} catatan di arsip.</p>
         </div>
         <div class="col-auto">
             <a href="/catatan" class="btn btn-outline-primary">← Aktif</a>
@@ -39,13 +40,32 @@
                 <div class="col-md-6 mb-3">
                     <div class="card border-secondary">
                         <div class="card-header text-muted">
-                            {{ $item->judul }}
-                            <small class="float-end">{{ $item->created_at->format('d M Y H:i') }}</small>
-
+                            <h5 class="mb-1">{{ $item->judul }}</h5>
+                            <small>Dibuat pada: {{ $item->created_at->format('d F Y \p\u\k\u\l H.i') }}</small>
                         </div>
                         <div class="card-body">
                             <p class="card-text">{{ Str::limit($item->isi, 100) }}</p>
-                            <a href="/catatan/{{ $item->id }}" class="btn btn-sm btn-outline-secondary">Lihat</a>
+
+
+                            {{-- ic baru --}}
+                            <a href="/catatan/{{ $item->id }}" class="btn btn-sm btn-outline-secondary" title="Lihat"><i
+                                    class="fas fa-eye"></i></a>
+                            <form action="/catatan/{{ $item->id }}/unarchive" method="POST" class="d-inline" title="Pulihkan">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                            </form>
+                            <form action="/catatan/{{ $item->id }}" method="POST" class="d-inline" title="Hapus permanen">
+                                @csrf
+                                @method('DELETE')
+                                <button type="button" class="btn btn-sm btn-danger"
+                                    onclick="bukaModalHapus('/catatan/{{ $item->id }}', '{{ addslashes($item->judul) }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+
+                            {{-- <a href="/catatan/{{ $item->id }}" class="btn btn-sm btn-outline-secondary">Lihat</a>
                             <form action="/catatan/{{ $item->id }}/unarchive" method="POST" class="d-inline">
                                 @csrf
                                 <button type="submit" class="btn btn-sm btn-success">Pulihkan</button>
@@ -55,7 +75,7 @@
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-sm btn-danger"
                                     onclick="return confirm('Hapus permanen?')">Hapus</button>
-                            </form>
+                            </form> --}}
                         </div>
                     </div>
                 </div>
@@ -67,5 +87,5 @@
             <a href="/catatan" class="ms-2">Kembali ke daftar aktif</a>
         </div>
     @endif
-        {{ $catatan->links('pagination::bootstrap-5') }}
+    {{ $catatan->links('pagination::bootstrap-5') }}
 @endsection

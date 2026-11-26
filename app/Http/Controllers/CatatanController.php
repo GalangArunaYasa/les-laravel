@@ -23,22 +23,22 @@ class CatatanController extends Controller
         }
 
         // fitur urut
-        $urut = $request->get('urut', 'terbaru'); // default: terbaru
-        if ($urut == 'terlama') {
+        $urut = $request->get('urut', 'terbaru');
+
+        if ($urut == 'lampiran') {
+            $query->whereNotNull('lampiran')->orderBy('created_at', 'desc');
+        } elseif ($urut == 'terlama') {
             $query->orderBy('created_at', 'asc');
         } else {
+            // default: terbaru
             $query->orderBy('created_at', 'desc');
         }
+
         // Ganti get() dengan paginate(5)
-        $catatan = $query->paginate(5); // 5 catatan per halaman
+        $catatan = $query->paginate(6); // 5 catatan per halaman
+        $jumlah_aktif = Catatan::where('user_id', auth()->id())->where('is_archived', false)->count();
 
-        return view('catatan.index', compact('catatan'));
-    }
-
-    public function create()
-    {
-
-        return view('catatan.create');
+        return view('catatan.index', compact('catatan', 'jumlah_aktif'));
     }
 
     public function store(Request $request)
@@ -65,12 +65,21 @@ class CatatanController extends Controller
 
         Catatan::create($data);
 
-        return redirect('/catatan')->with('sukses', 'Catatan berhasil disimpan!');
+        return redirect('catatan.index')->with('sukses', 'Catatan berhasil disimpan!');
+    }
+
+    public function create()
+    {
+        return view('catatan.create');
+    }
+
+    public function importForm()
+    {
+        return view('catatan.import');
     }
 
     public function show($id)
     {
-
         $catatan = Catatan::where('id', $id)->where('user_id', auth()->id())->firstOrFail();
 
         return view('catatan.show', compact('catatan'));
@@ -116,13 +125,19 @@ class CatatanController extends Controller
 
     public function destroy($id)
     {
-        $catatan = Catatan::findOrFail($id);
-        $catatan->delete();
-        if ($catatan->lampiran) {
-            Storage::disk('public')->delete($catatan->lampiran);
-        }
+        try {
+            // throw_if('error');
+            $catatan = Catatan::findOrFail($id);
+            $catatan->delete();
+            if ($catatan->lampiran) {
+                Storage::disk('public')->delete($catatan->lampiran);
+            }
 
-        return redirect('/catatan')->with('sukses', 'Catatan berhasil dihapus!');
+            return redirect('/catatan')->with('sukses', 'Catatan berhasil dihapus!');
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menghapus data!');
+        }
     }
 
     public function arsip(Request $request)
@@ -147,11 +162,11 @@ class CatatanController extends Controller
             $query->orderBy('created_at', 'desc');
         }
 
-        // // fitur bagi page
         // // Ganti get() dengan paginate(5)
         $catatan = $query->paginate(5); // 5 catatan per halaman
+        $jumlah_arsip = Catatan::where('user_id', auth()->id())->where('is_archived', true)->count();
 
-        return view('catatan.arsip', compact('catatan'));
+        return view('catatan.arsip', compact('catatan', 'jumlah_arsip'));
     }
 
     public function archive($id)
@@ -174,5 +189,82 @@ class CatatanController extends Controller
         $catatan->save();
 
         return redirect('/catatan')->with('sukses', 'Catatan dipulihkan dari arsip.');
+    }
+
+    public function export()
+    {
+        $catatan = Catatan::where('user_id', auth()->id())
+            ->where('is_archived', false)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $filename = 'catatan_aktif_'.date('Y-m-d').'.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function () use ($catatan) {
+            $file = fopen('php://output', 'w');
+
+            // BOM agar karakter UTF-8 terbaca dengan baik di Excel
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // Header tabel
+            fputcsv($file, [
+                'No',
+                'Judul Catatan',
+                'Isi Catatan',
+                'Tanggal Dibuat',
+            ], ';');
+
+            // Isi tabel
+            foreach ($catatan as $index => $item) {
+                fputcsv($file, [
+                    $index + 1,
+                    $item->judul,
+                    $item->isi,
+                    $item->created_at?->format('d-m-Y H:i'),
+                ], ';');
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    // fungsi import
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:csv,txt|max:2048',
+        ]);
+
+        $file = $request->file('file');
+        $handle = fopen($file->getPathname(), 'r');
+
+        // Lewati header
+        fgetcsv($handle);
+
+        $jumlah = 0;
+        while (($row = fgetcsv($handle)) !== false) {
+            if (count($row) >= 2) {
+                Catatan::create([
+                    'user_id' => auth()->id(),
+                    'judul' => $row[0],
+                    'isi' => $row[1],
+                    'is_archived' => false,
+                    'created_at' => $row[2] ?? now(),
+                    'updated_at' => now(),
+                ]);
+                $jumlah++;
+            }
+        }
+
+        fclose($handle);
+
+        return redirect('/catatan')->with('sukses', "Berhasil mengimpor {$jumlah} catatan.");
     }
 }

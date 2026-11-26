@@ -6,13 +6,16 @@
     <div class="row justify-content-between mb-3">
         <div class="col">
             <h2>Daftar Catatan</h2>
+            <p class="text-muted">Kamu punya {{ $jumlah_aktif }} catatan aktif.</p>
         </div>
 
         {{-- arsip dan tambah catatan --}}
         <div class="col-auto">
+            <a href="/catatan/export" class="btn btn-outline-success me-2"><i class="fas fa-file-csv"></i> Ekspor CSV</a>
+            <a href="/catatan/import" class="btn btn-outline-info me-2"><i class="bi bi-file-earmark-arrow-up me-1"></i>Impor CSV
+            </a> <a href="{{ Route('catatan.create') }}" class="btn btn-success">+ Tambah Baru</a>
             <a href="/catatan/arsip" class="btn btn-outline-secondary me-2">Arsip
                 ({{ App\Models\Catatan::where('user_id', auth()->id())->where('is_archived', true)->count() }})</a>
-            <a href="{{ Route('catatan.create') }}" class="btn btn-success">+ Tambah Baru</a>
         </div>
 
         {{-- pencarian --}}
@@ -34,6 +37,9 @@
                 <select name="urut" class="form-select" onchange="this.form.submit()">
                     <option value="terbaru" {{ request('urut') == 'terbaru' ? 'selected' : '' }}>Terbaru</option>
                     <option value="terlama" {{ request('urut') == 'terlama' ? 'selected' : '' }}>Terlama</option>
+                    <option value="lampiran" {{ request('urut') == 'lampiran' ? 'selected' : '' }}>Lampiran Tersedia</option>
+
+
                 </select>
             </form>
         </div>
@@ -46,8 +52,8 @@
                 <div class="col-md-6 mb-3">
                     <div class="card">
                         <div class="card-header">
-                            {{ $item->judul }}
-                            <small class="text-muted float-end">{{ $item->created_at->format('d M Y H:i') }}</small>
+                            <h5 class="mb-1">{{ $item->judul }}</h5>
+                            <small class="text-muted float-end">{{ $item->created_at->Locale('id')->diffForHumans() }}</small>
                         </div>
                         <div class="card-body">
                             <p class="card-text">{{ Str::limit($item->isi, 100) }}</p>
@@ -56,7 +62,32 @@
                                 <small class="text-muted">📎 Ada lampiran</small>
                             @endif
 
-                            <a href="{{ Route('catatan.show', $item->id) }}" class="btn btn-sm btn-outline-primary">Lihat</a>
+
+                            {{-- ic lihat dan edit baru --}}
+                            <a href="/catatan/{{ $item->id }}" class="btn btn-sm btn-outline-primary" title="Lihat"><i
+                                    class="fas fa-eye"></i></a>
+                            <a href="/catatan/{{ $item->id }}/edit" class="btn btn-sm btn-outline-warning" title="Edit"><i
+                                    class="fas fa-edit"></i></a>
+                            <form action="/catatan/{{ $item->id }}/archive" method="POST" class="d-inline" title="Arsipkan">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                    onclick="return confirm('Arsipkan catatan ini?')">
+                                    <i class="fas fa-archive"></i>
+                                </button>
+                            </form>
+                            <form action="/catatan/{{ $item->id }}" method="POST" class="d-inline" title="Hapus">
+                                @csrf
+                                @method('DELETE')
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                    onclick="bukaModalHapus('/catatan/{{ $item->id }}', '{{ addslashes($item->judul) }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+
+
+
+                            {{-- lihat dan edit lama --}}
+                            {{-- <a href="{{ Route('catatan.show', $item->id) }}" class="btn btn-sm btn-outline-primary">Lihat</a>
                             <a href="{{ Route('catatan.edit', $item->id) }}" class="btn btn-sm btn-outline-warning">Edit</a>
 
                             <form action="{{ Route('catatan.destroy', $item->id) }}" method="POST" class="d-inline">
@@ -64,7 +95,7 @@
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-sm btn-outline-danger"
                                     onclick="return confirm('Yakin?')">Hapus</button>
-                            </form>
+                            </form> --}}
                         </div>
                     </div>
                 </div>
@@ -75,17 +106,5 @@
             Belum ada catatan. <a href="/catatan/tambah">Buat catatan pertama!</a>
         </div>
     @endif
-        {{ $catatan->links('pagination::bootstrap-5') }}
-
-    <script>
-        @if(session('sukses'))
-            Swal.fire({
-                icon: 'success',
-                title: 'Sukses',
-                text: '{{ session('sukses') }}',
-                timer: 3000,
-                showConfirmButton: false
-            });
-        @endif
-    </script>
+    {{ $catatan->links('pagination::bootstrap-5') }}
 @endsection
